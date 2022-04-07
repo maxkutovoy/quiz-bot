@@ -37,7 +37,7 @@ def main():
     new_questions = open_file(file_path, encoding='KOI8-R').split("\n\n\n")
     for note in new_questions:
         question_text, answer_text = split_note(note)
-        r.set(question_text, answer_text)
+        r.set(f'Вопрос: {question_text}', answer_text)
 
 
 if __name__ == "__main__":

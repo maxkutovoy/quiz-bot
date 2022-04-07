@@ -22,26 +22,44 @@ reply_markup = telegram.ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+remove_markup = telegram.ReplyKeyboardRemove()
+
 
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Привет! Давай начнем')
+    update.message.reply_text(
+        'Привет! Давай начнем',
+        reply_markup=reply_markup
+    )
 
 
 def tg_send_answer(update: Update, context: CallbackContext):
 
     text = update.message.text
-    chat_id = update.message.chat_id
-    context.bot.send_message(
-        chat_id=chat_id,
-        text=text,
-        reply_markup=reply_markup
-    )
+    tg_chat_id = update.message.chat_id
+    last_question = r.get(f'{tg_chat_id}_last_question')
+    answer = r.get(last_question).decode('utf-8')
+    print(f'Ответ пользователя: {text}')
+    print(answer)
+
+    if text == answer:
+        context.bot.send_message(
+            chat_id=tg_chat_id,
+            text="Правильно!",
+            reply_markup=reply_markup
+        )
+        r.delete(f'{tg_chat_id}_last_question')
+    else:
+        context.bot.send_message(
+            chat_id=tg_chat_id,
+            text="Плохой ответ",
+            reply_markup=reply_markup
+        )
 
 
 def tg_send_random_question(update: Update, context: CallbackContext):
     tg_chat_id = update.message.chat_id
 
-    questions = r.keys()
+    questions = r.keys("Вопрос*")
     random_question = (random.choice(questions)).decode('utf-8')
 
     while r.get(f'{tg_chat_id}_last_question') is random_question:
