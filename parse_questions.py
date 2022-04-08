@@ -1,8 +1,10 @@
 import redis
 from environs import Env
 
+from create_argparse import create_parser
 
-def open_file(file_path, encoding='UTF-8'):
+
+def open_file(file_path, encoding):
     with open(file_path, 'r', encoding=encoding) as file:
         text = file.read()
     return text
@@ -33,8 +35,12 @@ def main():
         db=0
     )
 
-    file_path = 'questions/1vs1201.txt'
-    new_questions = open_file(file_path, encoding='KOI8-R').split("\n\n\n")
+    parser = create_parser()
+    args = parser.parse_args()
+
+    file_path = args.path_to_file
+    encoding = args.encoding
+    new_questions = open_file(file_path, encoding).split("\n\n\n")
     for note in new_questions:
         question_text, answer_text = split_note(note)
         r.set(f'Вопрос: {question_text}', answer_text)
