@@ -9,26 +9,25 @@ from telegram import Update
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
                           CallbackContext, ConversationHandler)
 
+import log_handler
+
 logger = logging.getLogger('TG logger')
 
 
-new_question_keyboard = [
-    ['Новый вопрос'],
-    ['Мой счет']
-]
 
 new_question_markup = telegram.ReplyKeyboardMarkup(
-    new_question_keyboard,
+    [
+        ['Новый вопрос'],
+        ['Мой счет']
+    ],
     resize_keyboard=True
 )
 
-answer_keyboard = [
-    ['Сдаться'],
-    ['Мой счет']
-]
-
 answer_keyboard = telegram.ReplyKeyboardMarkup(
-    answer_keyboard,
+    [
+        ['Сдаться'],
+        ['Мой счет']
+    ],
     resize_keyboard=True
 )
 
@@ -45,26 +44,26 @@ def start(update: Update, context: CallbackContext):
     return QUESTION
 
 
-def tg_send_answer(update: Update, context: CallbackContext):
+def tg_check_answer(update: Update, context: CallbackContext):
 
     text = update.message.text
     tg_chat_id = update.message.chat_id
     last_question = r.get(f'{tg_chat_id}_last_question')
     answer = r.get(last_question).decode('utf-8')
     edited_answer = answer.split('.')[0].split('(')[0]
+    print(edited_answer)
 
     if text == edited_answer:
         context.bot.send_message(
             chat_id=tg_chat_id,
-            text="Правильно!",
+            text='Правильно! Для следующего вопроса нажми "Новый вопрос"',
             reply_markup=new_question_markup
         )
         r.delete(f'{tg_chat_id}_last_question')
-        return ConversationHandler.END
     else:
         context.bot.send_message(
             chat_id=tg_chat_id,
-            text="Плохой ответ",
+            text='Неправильно… Попробуешь ещё раз?',
             reply_markup=answer_keyboard
         )
     return QUESTION
@@ -73,7 +72,7 @@ def tg_send_answer(update: Update, context: CallbackContext):
 def tg_send_random_question(update: Update, context: CallbackContext):
     tg_chat_id = update.message.chat_id
 
-    questions = r.keys("Вопрос*")
+    questions = r.keys('Вопрос*')
     random_question = (random.choice(questions)).decode('utf-8')
 
     while r.get(f'{tg_chat_id}_last_question') is random_question:
@@ -99,7 +98,7 @@ def skip_question(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=tg_chat_id,
         text=f'Правильный ответ на прошлый вопрос: {edited_answer}',
-        reply_markup=new_question_markup
+        reply_markup=answer_keyboard
     )
 
     return tg_send_random_question(update, context)
@@ -123,7 +122,7 @@ def start_bot(tg_token):
             QUESTION: [
                 MessageHandler(Filters.text('Новый вопрос'), tg_send_random_question),
                 MessageHandler(Filters.text('Сдаться'), skip_question),
-                MessageHandler(Filters.text, tg_send_answer),
+                MessageHandler(Filters.text, tg_check_answer),
             ],
         },
 
@@ -132,28 +131,8 @@ def start_bot(tg_token):
 
     dispatcher.add_handler(question_handler)
 
-    # dispatcher.add_handler(CommandHandler('start', start))
-    # dispatcher.add_handler(MessageHandler(
-    #     Filters.text('Новый вопрос') & ~Filters.command,
-    #     tg_send_random_question,
-    #     pass_user_data=True
-    # )
-    # )
-    # dispatcher.add_handler(MessageHandler(
-    #     Filters.text & ~Filters.command,
-    #     tg_send_answer
-    # )
-    # )
-
     updater.start_polling()
     updater.idle()
-
-
-def main():
-    pass
-
-    # questions_from_db = r.keys()
-    # dispatcher.bot_data['questions'] = questions_from_db
 
 
 if __name__ == '__main__':
@@ -161,6 +140,7 @@ if __name__ == '__main__':
     env.read_env()
 
     tg_token = env.str('TG_TOKEN')
+    tg_chat_id = env.str('TG_CHAT_ID')
 
     redis_host = env.str('REDIS_DB_NAME')
     redis_port = env.int('REDIS_PORT')
@@ -175,6 +155,9 @@ if __name__ == '__main__':
 
     tg_bot = telegram.Bot(token=tg_token)
     logger.setLevel(logging.WARNING)
-    # logger.addHandler(log_handler.TelegramLogsHandler(tg_bot))
+    logger.addHandler(log_handler.TelegramLogsHandler(tg_bot, tg_chat_id))
 
-    start_bot(tg_token)
+    try:
+        start_bot(tg_token)
+    except requests.exceptions.HTTPError as error:
+        logger.warning('Проблема с ботом Телеграм')
