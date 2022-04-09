@@ -9,7 +9,7 @@ def create_parser():
         '--path_to_file',
         help='Путь к файлу с вопросами',
         nargs='?',
-        default='/1vs1201.txt',
+        default='questions.txt',
         type=str,
     )
 
