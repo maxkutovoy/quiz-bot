@@ -20,9 +20,6 @@ def vk_send_random_question(event, vk_api):
     questions = r.keys('Вопрос*')
     random_question = (random.choice(questions)).decode('utf-8')
 
-    while r.get(f'{vk_user_id}_last_question') is random_question:
-        random_question = (random.choice(questions)).decode('utf-8')
-
     vk_api.messages.send(
         user_id=vk_user_id,
         random_id=random.randint(1, 1000),

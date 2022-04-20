@@ -75,9 +75,6 @@ def tg_send_random_question(update: Update, context: CallbackContext):
     questions = r.keys('Вопрос*')
     random_question = (random.choice(questions)).decode('utf-8')
 
-    while r.get(f'{tg_chat_id}_last_question') is random_question:
-        random_question = (random.choice(questions)).decode('utf-8')
-
     context.bot.send_message(
         chat_id=tg_chat_id,
         text=random_question,
