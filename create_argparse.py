@@ -6,10 +6,10 @@ def create_parser():
         description='Программа переносит вопросы и ответы в базу данных из txt файла')
 
     parser.add_argument(
-        '--path_to_file',
-        help='Путь к файлу с вопросами',
+        '--path_to_dir',
+        help='Путь к каталогу с вопросами',
         nargs='?',
-        default='questions.txt',
+        default='questions',
         type=str,
     )
 
