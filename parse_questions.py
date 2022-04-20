@@ -47,13 +47,11 @@ def main():
 
     for file in files:
         file_path = os.path.join(dir_path, file)
-        print(file_path)
         new_questions = open_file(file_path, encoding).split("\n\n\n")
         for note in new_questions:
             try:
                 question_text, answer_text = split_note(note)
                 r.set(f'Вопрос: {question_text}', answer_text)
-                print(f'{question_text} - добавлен')
             except TypeError:
                 pass
 
