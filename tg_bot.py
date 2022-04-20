@@ -51,7 +51,6 @@ def tg_check_answer(update: Update, context: CallbackContext):
     last_question = r.get(f'{tg_chat_id}_last_question')
     answer = r.get(last_question).decode('utf-8')
     edited_answer = answer.split('.')[0].split('(')[0]
-    print(edited_answer)
 
     if text == edited_answer:
         context.bot.send_message(
